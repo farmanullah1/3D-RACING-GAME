@@ -1,145 +1,126 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
-import type { GameStore, CarState, GameState, Controls } from '../types/game.types'
+import type { RaceState, GamePhase, CarDynamics, ScoreEvent } from '../types'
 
-// ─── Default States ────────────────────────────────────────────────────────────
-const defaultCar: CarState = {
-  position: { x: 0, y: 0.5, z: 0 },
-  rotation: { x: 0, y: 0, z: 0 },
-  speed: 0,
-  nitro: 100,
-  lapTime: 0,
-  bestLapTime: Infinity,
-  currentLap: 1,
-  totalLaps: 3,
-  isDrifting: false,
-  isNitroActive: false,
-  checkpointsPassed: [],
+function generateEventId(): string { return Math.random().toString(36).slice(2,8) }
+
+const defaultCar: CarDynamics = {
+  position:     [0, 0.4, -50],
+  rotation:     [0, 0, 0],
+  velocity:     [0, 0, 0],
+  speed:        0,
+  nitro:        100,
+  damage:       0,
+  isDrifting:   false,
+  isNitroActive:false,
+  driftAngle:   0,
+  wheelSpin:    0,
+  engineRPM:    800,
 }
 
-const defaultGame: GameState = {
-  phase: 'loading',
-  score: 0,
-  highScore: parseInt(localStorage.getItem('highScore') || '0'),
-  totalTime: 0,
-  fps: 60,
-  quality: 'high',
-  isNightMode: false,
-  isMuted: false,
-  selectedTrackId: 0,
-  selectedCarId: 0,
+const defaultRace: Omit<RaceState, 'phase'> = {
+  selectedCarId:    'phantom_gt',
+  selectedTrackId:  'city_circuit',
+  car:              { ...defaultCar },
+  currentLap:       1,
+  totalLaps:        3,
+  lapHistory:       [],
+  currentLapStart:  0,
+  bestLapTime:      Infinity,
+  checkpointsPassed:[],
+  raceStartTime:    0,
+  raceFinishTime:   null,
+  score:            0,
+  scoreEvents:      [],
+  fps:              60,
+  quality:          'high',
+  ghostActive:      false,
 }
 
-const defaultControls: Controls = {
-  forward: false,
-  backward: false,
-  left: false,
-  right: false,
-  nitro: false,
-  drift: false,
-  brake: false,
-  pause: false,
+export interface GameActions {
+  setPhase:        (phase: GamePhase)       => void
+  selectCar:       (id: string)             => void
+  selectTrack:     (id: string)             => void
+  startRace:       ()                       => void
+  updateCar:       (p: Partial<CarDynamics>)=> void
+  addScore:        (type: ScoreEvent['type'], pts: number, msg: string) => void
+  passCheckpoint:  (id: number)             => void
+  completeLap:     ()                       => void
+  takeDamage:      (amount: number)         => void
+  updateFPS:       (fps: number)            => void
+  setQuality:      (q: RaceState['quality'])=> void
+  resetRace:       ()                       => void
+  toggleGhost:     ()                       => void
 }
 
-// ─── Store ─────────────────────────────────────────────────────────────────────
-export const useGameStore = create<GameStore>()(
-  subscribeWithSelector((set, get) => ({
-    car: { ...defaultCar },
-    game: { ...defaultGame },
-    controls: { ...defaultControls },
-    scoreEvents: [],
+export const useGameStore = create<any>()(
+  subscribeWithSelector<any, any>((set, get) => ({
+    phase: 'loading' as GamePhase,
+    ...defaultRace,
 
-    updateCar: (partial) =>
-      set((state) => ({ car: { ...state.car, ...partial } })),
+    setPhase:    (phase: GamePhase)    => set({ phase }),
+    selectCar:   (id: string)       => set({ selectedCarId: id }),
+    selectTrack: (id: string)       => set({ selectedTrackId: id }),
 
-    updateGame: (partial) =>
-      set((state) => ({ game: { ...state.game, ...partial } })),
+    startRace: () => set({
+      ...defaultRace,
+      selectedCarId:   get().selectedCarId,
+      selectedTrackId: get().selectedTrackId,
+      raceStartTime:   Date.now(),
+      currentLapStart: Date.now(),
+      phase:           'countdown',
+    }),
 
-    setPhase: (phase) =>
-      set((state) => ({ game: { ...state.game, phase } })),
+    updateCar: (p: Partial<CarDynamics>) => set((s: any) => ({ car: { ...s.car, ...p } })),
 
-    addScore: (event) => {
-      set((state) => {
-        const newScore = state.game.score + event.points
-        const newHighScore = Math.max(newScore, state.game.highScore)
-        if (newHighScore > state.game.highScore) {
-          localStorage.setItem('highScore', String(newHighScore))
+    addScore: (type: ScoreEvent['type'], pts: number, msg: string) => {
+      set((s: any) => {
+        const event: ScoreEvent = {
+          id: generateEventId(), type, points: pts, message: msg, timestamp: Date.now(),
         }
         return {
-          game: { ...state.game, score: newScore, highScore: newHighScore },
-          scoreEvents: [...state.scoreEvents.slice(-9), event], // keep last 10
+          score:       s.score + pts,
+          scoreEvents: [...s.scoreEvents.slice(-8), event],
         }
       })
     },
 
+    passCheckpoint: (id: number) => set((s: any) => ({
+      checkpointsPassed: s.checkpointsPassed.includes(id)
+        ? s.checkpointsPassed
+        : [...s.checkpointsPassed, id],
+    })),
+
     completeLap: () => {
-      const { car } = get()
-      const isNewBest = car.lapTime < car.bestLapTime
-      const newBestLap = isNewBest ? car.lapTime : car.bestLapTime
+      const s = get()
+      const now = Date.now()
+      const lapTime = now - s.currentLapStart
+      const isNewBest = lapTime < s.bestLapTime
+      const newBest = isNewBest ? lapTime : s.bestLapTime
 
-      // Award clean lap bonus
-      const bonusPoints = isNewBest ? 500 : 100
-      get().addScore({
-        type: 'clean_lap',
-        points: bonusPoints,
-        timestamp: Date.now(),
-        message: isNewBest ? '🏆 NEW BEST LAP! +500' : '✅ LAP COMPLETE +100',
-      })
+      if (isNewBest) get().addScore('best_lap', 500, '🏆 BEST LAP! +500')
+      else           get().addScore('clean_lap', 100, '✅ LAP COMPLETE +100')
 
-      if (car.currentLap >= car.totalLaps) {
-        set((state) => ({
-          car: { ...state.car, bestLapTime: newBestLap },
-          game: { ...state.game, phase: 'finished' },
-        }))
+      if (s.currentLap >= s.totalLaps) {
+        set({ bestLapTime: newBest, raceFinishTime: now, phase: 'results' })
       } else {
-        set((state) => ({
-          car: {
-            ...state.car,
-            currentLap: state.car.currentLap + 1,
-            lapTime: 0,
-            bestLapTime: newBestLap,
-            checkpointsPassed: [],
-          },
-        }))
+        set({ currentLap: s.currentLap + 1, currentLapStart: now, bestLapTime: newBest, checkpointsPassed: [] })
       }
     },
 
-    passCheckpoint: (id) => {
-      set((state) => ({
-        car: {
-          ...state.car,
-          checkpointsPassed: [...state.car.checkpointsPassed, id],
-        },
-      }))
+    takeDamage: (amount: number) => set((s: any) => ({
+      car: { ...s.car, damage: Math.min(100, s.car.damage + amount) },
+    })),
+
+    updateFPS: (fps: number) => {
+      const q = fps < 30 ? 'low' : fps < 50 ? 'medium' : 'high'
+      set((s: any) => ({ fps, quality: s.quality !== q ? q : s.quality }))
     },
 
-    toggleNightMode: () =>
-      set((state) => ({ game: { ...state.game, isNightMode: !state.game.isNightMode } })),
+    setQuality: (q: RaceState['quality']) => set({ quality: q }),
 
-    toggleMuted: () =>
-      set((state) => ({ game: { ...state.game, isMuted: !state.game.isMuted } })),
+    resetRace: () => set({ ...defaultRace, phase: 'menu', selectedCarId: get().selectedCarId, selectedTrackId: get().selectedTrackId }),
 
-    setSelectedTrackId: (selectedTrackId) =>
-      set((state) => ({ game: { ...state.game, selectedTrackId } })),
-
-    setSelectedCarId: (selectedCarId) =>
-      set((state) => ({ game: { ...state.game, selectedCarId } })),
-
-    resetGame: () => {
-      set({
-        car: { ...defaultCar },
-        game: {
-          ...defaultGame,
-          highScore: get().game.highScore,
-          isNightMode: get().game.isNightMode,
-          isMuted: get().game.isMuted,
-          selectedTrackId: get().game.selectedTrackId,
-          selectedCarId: get().game.selectedCarId,
-          phase: 'menu',
-        },
-        controls: { ...defaultControls },
-        scoreEvents: [],
-      })
-    },
+    toggleGhost: () => set((s: any) => ({ ghostActive: !s.ghostActive })),
   }))
 )

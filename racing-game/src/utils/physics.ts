@@ -1,112 +1,95 @@
 /**
- * Physics utility functions for car simulation.
- * All values are in SI units unless noted.
+ * Physics engine for ApexRush Pro.
+ * All calculations are frame-rate independent via delta-time.
+ * Units: km/h for speed, radians for angles, seconds for time.
  */
 
-// ─── Constants ─────────────────────────────────────────────────────────────────
 export const PHYSICS = {
-  MAX_SPEED: 200,          // km/h
-  MAX_REVERSE_SPEED: 60,   // km/h
-  ACCELERATION: 60,        // km/h per second
-  BRAKING: 120,            // km/h per second
-  FRICTION: 30,            // km/h per second (natural deceleration)
-  STEERING_SPEED: 2.5,     // radians per second
-  DRIFT_STEERING: 4.0,     // radians per second (while drifting)
-  DRIFT_FRICTION: 0.97,    // multiplier per frame
-  NITRO_MULTIPLIER: 1.8,   // speed multiplier
-  NITRO_DRAIN: 25,         // nitro % per second
-  NITRO_RECHARGE: 12,      // nitro % per second (auto recharge)
-  DRIFT_SCORE_PER_SECOND: 10,
-  MIN_DRIFT_SPEED: 60,     // km/h minimum to initiate drift
-}
+  // Base stats (modified by car definition)
+  MAX_SPEED:          200,
+  REVERSE_SPEED:      60,
+  BASE_ACCELERATION:  55,
+  BASE_BRAKING:       110,
+  FRICTION_COAST:     22,
+  FRICTION_DRIFT:     18,
+  BASE_STEERING:      2.4,
+  DRIFT_STEERING:     3.8,
+  NITRO_DRAIN:        22,
+  NITRO_RECHARGE:     10,
+  MIN_DRIFT_SPEED:    55,
+  DAMAGE_PER_IMPACT:  8,
+  DAMAGE_SPEED_MULT:  0.04,
+  ENGINE_RPM_MAX:     8000,
+  ENGINE_RPM_IDLE:    800,
+} as const
 
-/**
- * Compute acceleration delta for a given frame.
- * @param currentSpeed - current speed in km/h
- * @param isForward - whether forward key is held
- * @param isBackward - whether backward key is held
- * @param isBrake - whether brake key is held
- * @param isNitro - whether nitro is active
- * @param nitroAvailable - whether nitro fuel remains
- * @param delta - frame time in seconds
- */
-export function computeSpeedDelta(
-  currentSpeed: number,
-  isForward: boolean,
-  isBackward: boolean,
-  isBrake: boolean,
-  isNitro: boolean,
-  nitroAvailable: boolean,
-  delta: number,
-  customPhysics?: { acceleration: number }
-): number {
-  const nitroBoost = (isNitro && nitroAvailable) ? PHYSICS.NITRO_MULTIPLIER : 1.0
-  const accelerationConst = customPhysics ? customPhysics.acceleration : PHYSICS.ACCELERATION
-  let acceleration = 0
+/** Compute speed change for one frame */
+export function computeSpeedDelta(opts: {
+  speed: number
+  forward: boolean; backward: boolean; brake: boolean
+  nitroActive: boolean; nitroFuel: number
+  carTopSpeed: number; carAccel: number; carBraking: number
+  surfaceFriction: number   // 0.5=sand, 0.7=wet, 1.0=dry
+  damageRatio: number       // 0–1, reduces performance
+  delta: number
+}): number {
+  const { speed, forward, backward, brake, nitroActive, nitroFuel, delta } = opts
+  const perf  = 1 - opts.damageRatio * 0.5  // damage reduces power
+  const nitro = (nitroActive && nitroFuel > 2) ? 1.0 : 0
+  const accel = opts.carAccel * 6 * PHYSICS.BASE_ACCELERATION * perf * opts.surfaceFriction
+  const brk   = opts.carBraking * 0.1 * PHYSICS.BASE_BRAKING * perf
+  const top   = opts.carTopSpeed * (1 + nitro * 0.5) * perf
 
-  if (isForward) {
-    acceleration = accelerationConst * nitroBoost
-  } else if (isBackward) {
-    if (currentSpeed > 0) {
-      acceleration = -PHYSICS.BRAKING  // braking while going forward
-    } else {
-      acceleration = -accelerationConst * 0.6  // reverse
-    }
-  } else if (isBrake) {
-    acceleration = currentSpeed > 0 ? -PHYSICS.BRAKING * 1.5 : PHYSICS.BRAKING * 1.5
-  } else {
-    // Natural friction deceleration
-    const frictionDir = currentSpeed > 0 ? -1 : 1
-    acceleration = frictionDir * PHYSICS.FRICTION
-    // Snap to 0 if near-zero
-    if (Math.abs(currentSpeed) < PHYSICS.FRICTION * delta) return 0
+  if (forward) {
+    const deficit = Math.max(0, top - speed)
+    return Math.min(accel * delta, deficit)
   }
-
-  return acceleration * delta
+  if (backward || brake) {
+    if (speed > 0) return -Math.min(brk * delta, speed)
+    if (backward)  return -Math.min(accel * 0.5 * delta, PHYSICS.REVERSE_SPEED + speed)
+  }
+  // Coasting friction
+  if (speed > 0) return -Math.min(PHYSICS.FRICTION_COAST * opts.surfaceFriction * delta, speed)
+  if (speed < 0) return  Math.min(PHYSICS.FRICTION_COAST * opts.surfaceFriction * delta, -speed)
+  return 0
 }
 
-/**
- * Compute steering rotation delta.
- */
-export function computeSteeringDelta(
-  currentSpeed: number,
-  isLeft: boolean,
-  isRight: boolean,
-  isDrifting: boolean,
-  delta: number,
-  customPhysics?: { steeringSpeed: number }
-): number {
-  if (!isLeft && !isRight) return 0
-  if (Math.abs(currentSpeed) < 2) return 0  // no steering when stopped
-
-  const direction = isLeft ? 1 : -1
-  const speedFactor = Math.min(Math.abs(currentSpeed) / 80, 1)  // speed-sensitive steering
-  const steeringRateVal = customPhysics ? customPhysics.steeringSpeed : PHYSICS.STEERING_SPEED
-  const steeringRate = isDrifting ? steeringRateVal * 1.6 : steeringRateVal
-  return direction * steeringRate * speedFactor * delta * (currentSpeed < 0 ? -1 : 1)
+/** Compute steering rotation delta */
+export function computeSteering(opts: {
+  speed: number; left: boolean; right: boolean
+  isDrifting: boolean; driftFactor: number
+  turningRadius: number; delta: number
+}): number {
+  if (!opts.left && !opts.right) return 0
+  if (Math.abs(opts.speed) < 3) return 0
+  const dir    = opts.left ? 1 : -1
+  const spFact = Math.min(Math.abs(opts.speed) / 80, 1)
+  const rate   = opts.isDrifting
+    ? PHYSICS.DRIFT_STEERING * opts.driftFactor
+    : PHYSICS.BASE_STEERING  * opts.turningRadius / 2.5
+  const sign   = opts.speed < 0 ? -1 : 1
+  return dir * rate * spFact * opts.delta * sign
 }
 
-/**
- * Check whether drift should activate.
- */
-export function shouldDrift(
-  speed: number,
-  isDriftKeyHeld: boolean,
-  isTurning: boolean
-): boolean {
-  return isDriftKeyHeld && Math.abs(speed) > PHYSICS.MIN_DRIFT_SPEED && isTurning
+/** Should drift activate? */
+export function checkDrift(speed: number, driftKey: boolean, isTurning: boolean, driftFactor: number): boolean {
+  return driftKey && driftFactor > 0.3 && Math.abs(speed) > PHYSICS.MIN_DRIFT_SPEED && isTurning
 }
 
-/**
- * Clamp a value between min and max.
- */
-export function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value))
+/** Surface friction multiplier */
+export function getSurfaceFriction(surface: string): number {
+  return ({ asphalt: 1.0, wet_asphalt: 0.72, gravel: 0.65, sand: 0.5, ice: 0.3 } as Record<string, number>)[surface] ?? 1.0
 }
 
-/**
- * Linear interpolation.
- */
-export function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t
+/** Engine RPM from speed */
+export function getEngineRPM(speed: number, maxSpeed: number): number {
+  const ratio = Math.abs(speed) / maxSpeed
+  return PHYSICS.ENGINE_RPM_IDLE + (PHYSICS.ENGINE_RPM_MAX - PHYSICS.ENGINE_RPM_IDLE) * ratio
+}
+
+export const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
+export const lerp  = (a: number, b: number, t: number) => a + (b - a) * t
+export const lerpAngle = (a: number, b: number, t: number) => {
+  const diff = ((b - a + Math.PI * 3) % (Math.PI * 2)) - Math.PI
+  return a + diff * t
 }

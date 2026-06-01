@@ -3,37 +3,25 @@ import { useFrame } from '@react-three/fiber'
 import { useGameStore } from '../store/gameStore'
 
 /**
- * Frame-independent game loop hook.
- * Tracks delta time, updates lap timer, monitors FPS.
- * Only active when game phase is 'racing'.
+ * Master game loop — runs inside Canvas, frame-rate independent.
+ * Updates FPS counter and auto-adjusts quality.
  */
 export function useGameLoop() {
-  const fpsBuffer = useRef<number[]>([])
-  const lastFpsUpdate = useRef(0)
+  const buf = useRef<number[]>([])
+  const lastFpsTime = useRef(0)
 
   useFrame((_, delta) => {
-    const { game, car, updateCar, updateGame } = useGameStore.getState()
-    if (game.phase !== 'racing') return
+    const { phase, updateFPS } = useGameStore.getState()
+    if (phase !== 'racing') return
 
-    // Update lap timer
-    updateCar({ lapTime: car.lapTime + delta * 1000 })
-
-    // FPS tracking (update every 500ms)
+    // FPS tracking every 500ms
+    buf.current.push(1 / delta)
     const now = performance.now()
-    fpsBuffer.current.push(1 / delta)
-    if (now - lastFpsUpdate.current > 500) {
-      const avgFps = fpsBuffer.current.reduce((a, b) => a + b, 0) / fpsBuffer.current.length
-      fpsBuffer.current = []
-      lastFpsUpdate.current = now
-
-      updateGame({ fps: Math.round(avgFps) })
-
-      // Adaptive quality scaling
-      if (avgFps < 40 && game.quality !== 'low') {
-        updateGame({ quality: avgFps < 30 ? 'low' : 'medium' })
-      } else if (avgFps > 58 && game.quality !== 'high') {
-        updateGame({ quality: 'high' })
-      }
+    if (now - lastFpsTime.current > 500 && buf.current.length > 0) {
+      const avg = buf.current.reduce((a,b) => a+b, 0) / buf.current.length
+      buf.current = []
+      lastFpsTime.current = now
+      updateFPS(Math.round(avg))
     }
   })
 }

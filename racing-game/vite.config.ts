@@ -1,30 +1,25 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  base: process.env.NODE_ENV === 'production' ? '/3D-RACING-GAME/' : '/',
-  plugins: [
-    react(),
-    tailwindcss(),
-  ],
+  plugins: [react()],
+  base: '/3D-RACING-GAME/',
   optimizeDeps: {
-    exclude: ['@react-three/cannon'],
+    include: ['three', '@react-three/fiber', '@react-three/drei'],
   },
   build: {
     target: 'esnext',
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('three')) {
-            return 'three';
+          if (id.includes('node_modules/three/')) {
+            return 'three'
           }
-          if (id.includes('@react-three/fiber')) {
-            return 'fiber';
+          if (id.includes('node_modules/@react-three/fiber/') || id.includes('node_modules/@react-three/drei/')) {
+            return 'r3f'
           }
-          if (id.includes('@react-three/drei')) {
-            return 'drei';
+          if (id.includes('node_modules/@react-three/postprocessing/')) {
+            return 'fx'
           }
         }
       }

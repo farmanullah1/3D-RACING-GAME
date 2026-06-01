@@ -1,21 +1,18 @@
 import { useGameStore } from '../../store/gameStore'
+import { useSettingsStore } from '../../store/settingsStore'
 
-/** Development-only FPS + quality indicator */
 export default function FPSCounter() {
-  const fps = useGameStore((s) => s.game.fps)
-  const quality = useGameStore((s) => s.game.quality)
-
-  const fpsColor = fps >= 55 ? '#39ff14' : fps >= 40 ? '#ff6600' : '#ff073a'
-  const qualityEmoji = quality === 'high' ? '🟢' : quality === 'medium' ? '🟡' : '🔴'
-
+  const fps     = useGameStore((s) => s.fps)
+  const quality = useGameStore((s) => s.quality)
+  const show    = useSettingsStore((s) => s.display.showFPS)
+  if (!show && !import.meta.env.DEV) return null
+  const color = fps >= 55 ? '#39ff14' : fps >= 40 ? '#ff6600' : '#ff073a'
   return (
-    <div className="glass-panel border border-white/10 px-2 py-1 text-right">
-      <div className="font-game text-[10px] font-bold" style={{ color: fpsColor }}>
-        {fps} FPS
-      </div>
-      <div className="font-game text-[8px] text-white/40 uppercase">
-        {qualityEmoji} {quality}
-      </div>
+    <div className="hud-panel select-none text-[10px] font-mono flex items-center gap-1.5 border border-white/10 px-2 py-1 text-white">
+      <span style={{ color }}>●</span>
+      <span>{fps} FPS</span>
+      <span className="text-white/30">·</span>
+      <span className="uppercase text-white/50">{quality}</span>
     </div>
   )
 }
