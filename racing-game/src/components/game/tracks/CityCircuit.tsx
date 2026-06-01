@@ -42,9 +42,9 @@ function NeonSign({ position, color, label: _label }: { position:[number,number,
 }
 
 /** City building silhouette */
-function Building({ pos, w, h, d, color='#0a0a1a' }: { pos:[number,number,number]; w:number; h:number; d:number; color?:string }) {
+function Building({ pos, w, h, d, color='#0a0a1a', rotation }: { pos:[number,number,number]; w:number; h:number; d:number; color?:string; rotation?: THREE.Euler }) {
   return (
-    <group position={pos}>
+    <group position={pos} rotation={rotation}>
       <mesh castShadow receiveShadow position={[0, h/2, 0]}>
         <boxGeometry args={[w, h, d]} />
         <meshStandardMaterial color={color} roughness={0.95} metalness={0.05} />
@@ -131,19 +131,22 @@ export function CityCircuit() {
         )
       })}
 
-      {/* ── City buildings (skyline canyon) mathematically aligned to track bounds ── */}
+      {/* ── City buildings (skyline canyon) mathematically aligned and rotated to track curves ── */}
       {Array.from({length: 12}, (_, i) => {
         const t = (i / 12) + 0.04
         const p = track.getPointAt(t)
+        const tan = track.getTangentAt(t)
+        const rotY = Math.atan2(tan.x, tan.z)
         const side = i % 2 === 0 ? -1 : 1
-        // Places buildings safely at least 26 units from the road center
-        const offset = side * (26 + (i * 1.5) % 10)
-        const no = track.getNormalAt(t, offset)
         
         // Balanced procedural sizes for stunning urban skylines
-        const w = 22 + (i * 7) % 12
-        const h = 50 + (i * 13) % 45
-        const d = 22 + (i * 7) % 12
+        const w = 18 + (i * 7) % 12
+        const h = 45 + (i * 13) % 45
+        const d = 16 + (i * 5) % 8 // smaller depth towards track
+        
+        // Places buildings safely offset from track center by (28 + d/2)
+        const offset = side * (28 + d / 2)
+        const no = track.getNormalAt(t, offset)
         
         return (
           <Building 
@@ -152,6 +155,7 @@ export function CityCircuit() {
             w={w} 
             h={h} 
             d={d} 
+            rotation={new THREE.Euler(0, rotY, 0)}
           />
         )
       })}
