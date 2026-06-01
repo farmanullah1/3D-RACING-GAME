@@ -38,6 +38,7 @@ export interface GameState {
   isNightMode: boolean
   isMuted: boolean
   selectedTrackId: number
+  selectedCarId: number
 }
 
 // ─── Controls ─────────────────────────────────────────────────────────────────
@@ -95,4 +96,5 @@ export interface GameStore {
   toggleNightMode: () => void
   toggleMuted: () => void
   setSelectedTrackId: (id: number) => void
+  setSelectedCarId: (id: number) => void
 }

@@ -98,6 +98,31 @@ function Skyscraper({ position }: { position: [number, number, number] }) {
   )
 }
 
+/** Floating space asteroid */
+function Asteroid({ position }: { position: [number, number, number] }) {
+  const scale = 1.5 + Math.random() * 3.5
+  const floatingY = 2 + Math.random() * 12 // Asteroids float in space!
+  const rotationOffset = [Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI] as [number, number, number]
+
+  const ref = useRef<THREE.Group>(null)
+  useFrame(({ clock }) => {
+    if (ref.current) {
+      ref.current.rotation.x += 0.003
+      ref.current.rotation.y += 0.002
+      ref.current.position.y = floatingY + Math.sin(clock.getElapsedTime() * 0.5 + floatingY) * 1.5
+    }
+  })
+
+  return (
+    <group ref={ref} position={[position[0], floatingY, position[2]]}>
+      <mesh castShadow receiveShadow rotation={rotationOffset}>
+        <dodecahedronGeometry args={[scale, 1]} />
+        <meshStandardMaterial color="#2d2d3a" roughness={0.9} metalness={0.2} />
+      </mesh>
+    </group>
+  )
+}
+
 /** Glowing checkpoint gate */
 function CheckpointGate({
   position,
@@ -271,6 +296,8 @@ export default function Track() {
           return <DesertRock key={i} position={pos} />
         } else if (activeTrack.decorations === 'city') {
           return <Skyscraper key={i} position={pos} />
+        } else if (activeTrack.decorations === 'space') {
+          return <Asteroid key={i} position={pos} />
         } else {
           return <Tree key={i} position={pos} />
         }

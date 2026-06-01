@@ -27,6 +27,7 @@ const defaultGame: GameState = {
   isNightMode: false,
   isMuted: false,
   selectedTrackId: 0,
+  selectedCarId: 0,
 }
 
 const defaultControls: Controls = {
@@ -121,6 +122,9 @@ export const useGameStore = create<GameStore>()(
     setSelectedTrackId: (selectedTrackId) =>
       set((state) => ({ game: { ...state.game, selectedTrackId } })),
 
+    setSelectedCarId: (selectedCarId) =>
+      set((state) => ({ game: { ...state.game, selectedCarId } })),
+
     resetGame: () => {
       set({
         car: { ...defaultCar },
@@ -130,6 +134,7 @@ export const useGameStore = create<GameStore>()(
           isNightMode: get().game.isNightMode,
           isMuted: get().game.isMuted,
           selectedTrackId: get().game.selectedTrackId,
+          selectedCarId: get().game.selectedCarId,
           phase: 'menu',
         },
         controls: { ...defaultControls },

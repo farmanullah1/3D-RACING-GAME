@@ -34,6 +34,7 @@ export default function Environment() {
     if (isNightMode) baseElevation = -15
     else if (activeTrack.decorations === 'rocks') baseElevation = 4 // Sunset low sun
     else if (activeTrack.decorations === 'city') baseElevation = -25 // City night
+    else if (activeTrack.decorations === 'space') baseElevation = -40 // Cosmic deep space
     
     sunRef.current.elevation = baseElevation + Math.sin(t) * 2
     sunRef.current.azimuth = 180 + t * 5
@@ -51,6 +52,7 @@ export default function Environment() {
     if (isNightMode) return [100, -35, -100]
     if (activeTrack.decorations === 'rocks') return [100, 5, -100]
     if (activeTrack.decorations === 'city') return [100, -25, -100]
+    if (activeTrack.decorations === 'space') return [100, -40, -100]
     return [100, 20, -100]
   }, [isNightMode, activeTrack])
 
@@ -58,12 +60,14 @@ export default function Environment() {
     if (isNightMode) return '#101d3a'
     if (activeTrack.decorations === 'rocks') return '#ffa07a'
     if (activeTrack.decorations === 'city') return '#1b1035'
+    if (activeTrack.decorations === 'space') return '#1f003a' // Deep cosmic purple
     return '#b0c8ff'
   }, [isNightMode, activeTrack])
 
   const ambientIntensity = useMemo(() => {
     if (isNightMode) return 0.08
     if (activeTrack.decorations === 'city') return 0.25
+    if (activeTrack.decorations === 'space') return 0.35
     return 0.4
   }, [isNightMode, activeTrack])
 
@@ -71,6 +75,7 @@ export default function Environment() {
     if (isNightMode) return '#5e85c8'
     if (activeTrack.decorations === 'rocks') return '#ff5500'
     if (activeTrack.decorations === 'city') return '#bf00ff'
+    if (activeTrack.decorations === 'space') return '#ff00aa' // Pink starlight
     return '#fff5e0'
   }, [isNightMode, activeTrack])
 
@@ -78,12 +83,14 @@ export default function Environment() {
     if (isNightMode) return 0.08
     if (activeTrack.decorations === 'rocks') return 1.8
     if (activeTrack.decorations === 'city') return 0.5
+    if (activeTrack.decorations === 'space') return 0.7
     return 2.2
   }, [isNightMode, activeTrack])
 
   const sparklesColor = useMemo(() => {
     if (activeTrack.decorations === 'city') return '#bf00ff'
     if (activeTrack.decorations === 'rocks') return '#ff9900'
+    if (activeTrack.decorations === 'space') return '#ff33ff' // Purple stellar dust
     return '#ffffff'
   }, [activeTrack])
 
@@ -91,6 +98,7 @@ export default function Environment() {
     if (isNightMode) {
       if (activeTrack.decorations === 'rocks') return '#503020'
       if (activeTrack.decorations === 'city') return '#02020a'
+      if (activeTrack.decorations === 'space') return '#010103'
       return '#0c1b0a'
     }
     return activeTrack.groundColor
@@ -113,18 +121,22 @@ export default function Environment() {
       <Stars
         radius={200}
         depth={60}
-        count={isNightMode || activeTrack.decorations === 'city' ? 6000 : 3000}
-        factor={isNightMode || activeTrack.decorations === 'city' ? 6 : 4}
-        saturation={isNightMode || activeTrack.decorations === 'city' ? 0.4 : 0}
+        count={activeTrack.decorations === 'space' ? 10000 : isNightMode || activeTrack.decorations === 'city' ? 6000 : 3000}
+        factor={activeTrack.decorations === 'space' ? 8 : isNightMode || activeTrack.decorations === 'city' ? 6 : 4}
+        saturation={activeTrack.decorations === 'space' ? 0.8 : isNightMode || activeTrack.decorations === 'city' ? 0.4 : 0}
         fade
         speed={0.5}
       />
 
-      {/* ── Clouds ───────────────────────────────────── */}
-      <Cloud position={[-30, 25, -80]} speed={0.2} opacity={isNightMode ? 0.2 : activeTrack.decorations === 'rocks' ? 0.5 : 0.6} segments={10} />
-      <Cloud position={[60, 30, -120]} speed={0.15} opacity={isNightMode ? 0.15 : activeTrack.decorations === 'rocks' ? 0.4 : 0.4} segments={8} />
-      <Cloud position={[0, 28, -50]} speed={0.25} opacity={isNightMode ? 0.2 : activeTrack.decorations === 'rocks' ? 0.4 : 0.5} segments={12} />
-      <Cloud position={[-70, 22, -60]} speed={0.1} opacity={isNightMode ? 0.1 : activeTrack.decorations === 'rocks' ? 0.3 : 0.3} segments={7} />
+      {/* ── Clouds (disabled in space) ─────────────────── */}
+      {activeTrack.decorations !== 'space' && (
+        <>
+          <Cloud position={[-30, 25, -80]} speed={0.2} opacity={isNightMode ? 0.2 : activeTrack.decorations === 'rocks' ? 0.5 : 0.6} segments={10} />
+          <Cloud position={[60, 30, -120]} speed={0.15} opacity={isNightMode ? 0.15 : activeTrack.decorations === 'rocks' ? 0.4 : 0.4} segments={8} />
+          <Cloud position={[0, 28, -50]} speed={0.25} opacity={isNightMode ? 0.2 : activeTrack.decorations === 'rocks' ? 0.4 : 0.5} segments={12} />
+          <Cloud position={[-70, 22, -60]} speed={0.1} opacity={isNightMode ? 0.1 : activeTrack.decorations === 'rocks' ? 0.3 : 0.3} segments={7} />
+        </>
+      )}
 
       {/* ── Lighting ─────────────────────────────────── */}
       {/* Ambient: soft global fill */}

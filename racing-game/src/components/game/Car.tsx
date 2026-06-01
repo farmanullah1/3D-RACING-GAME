@@ -4,6 +4,7 @@ import { Trail, Sparkles } from '@react-three/drei'
 import * as THREE from 'three'
 import { useGameStore } from '../../store/gameStore'
 import { TRACKS } from '../../utils/tracks'
+import { CARS } from '../../utils/cars'
 import {
   computeSpeedDelta,
   computeSteeringDelta,
@@ -49,92 +50,221 @@ function Wheel({
 }
 
 /** Car body + details */
+/** Car body + details */
 function CarBody({
   isDrifting,
   speed,
   isNightMode,
+  activeCar,
 }: {
   isDrifting: boolean
   speed: number
   isNightMode: boolean
+  activeCar: import('../../utils/cars').CarData
 }) {
-  const bodyColor = '#c0392b'    // Racing red
-  const accentColor = '#ff6600'  // Orange accent
+  const bodyColor = activeCar.color
+  const accentColor = activeCar.accentColor
+  const emissiveColor = activeCar.emissiveColor
 
   return (
     <group>
-      {/* Main body */}
-      <mesh castShadow position={[0, 0.28, 0]}>
-        <boxGeometry args={[1.8, 0.45, 4.2]} />
-        <meshPhysicalMaterial
-          color={bodyColor}
-          metalness={0.95}
-          roughness={0.12}
-          clearcoat={1.0}
-          clearcoatRoughness={0.05}
-          reflectivity={1.0}
-        />
-      </mesh>
+      {/* ── Model-Specific Car Shells ────────────────────────────────────────── */}
+      
+      {activeCar.modelName === 'sports' && (
+        <group>
+          {/* Main body */}
+          <mesh castShadow position={[0, 0.28, 0]}>
+            <boxGeometry args={[1.8, 0.45, 4.2]} />
+            <meshPhysicalMaterial
+              color={bodyColor}
+              metalness={0.95}
+              roughness={0.12}
+              clearcoat={1.0}
+              clearcoatRoughness={0.05}
+              reflectivity={1.0}
+            />
+          </mesh>
+          {/* Cabin / roof */}
+          <mesh castShadow position={[0, 0.65, -0.2]}>
+            <boxGeometry args={[1.55, 0.38, 2.1]} />
+            <meshPhysicalMaterial
+              color="#1a1a2e"
+              metalness={0.4}
+              roughness={0.05}
+              clearcoat={1.0}
+              clearcoatRoughness={0.02}
+            />
+          </mesh>
+          {/* Windshield (glass) */}
+          <mesh position={[0, 0.62, 0.85]}>
+            <boxGeometry args={[1.5, 0.35, 0.05]} />
+            <meshPhysicalMaterial
+              color="#88ccff"
+              metalness={0.0}
+              roughness={0.0}
+              transmission={0.9}
+              transparent
+              opacity={0.4}
+            />
+          </mesh>
+          {/* Rear windshield */}
+          <mesh position={[0, 0.62, -1.25]}>
+            <boxGeometry args={[1.5, 0.32, 0.05]} />
+            <meshPhysicalMaterial
+              color="#88ccff"
+              metalness={0.0}
+              roughness={0.0}
+              transmission={0.9}
+              transparent
+              opacity={0.4}
+            />
+          </mesh>
+          {/* Front bumper */}
+          <mesh castShadow position={[0, 0.15, 2.15]}>
+            <boxGeometry args={[1.85, 0.28, 0.18]} />
+            <meshStandardMaterial color={accentColor} metalness={0.6} roughness={0.3} />
+          </mesh>
+          {/* Rear spoiler */}
+          <mesh castShadow position={[0, 0.72, -2.1]}>
+            <boxGeometry args={[1.6, 0.08, 0.5]} />
+            <meshStandardMaterial color="#111111" metalness={0.7} roughness={0.2} />
+          </mesh>
+          <mesh castShadow position={[-0.65, 0.52, -2.1]}>
+            <boxGeometry args={[0.06, 0.35, 0.12]} />
+            <meshStandardMaterial color="#222222" metalness={0.8} roughness={0.2} />
+          </mesh>
+          <mesh castShadow position={[0.65, 0.52, -2.1]}>
+            <boxGeometry args={[0.06, 0.35, 0.12]} />
+            <meshStandardMaterial color="#222222" metalness={0.8} roughness={0.2} />
+          </mesh>
+        </group>
+      )}
 
-      {/* Cabin / roof */}
-      <mesh castShadow position={[0, 0.65, -0.2]}>
-        <boxGeometry args={[1.55, 0.38, 2.1]} />
-        <meshPhysicalMaterial
-          color="#1a1a2e"
-          metalness={0.4}
-          roughness={0.05}
-          clearcoat={1.0}
-          clearcoatRoughness={0.02}
-        />
-      </mesh>
+      {activeCar.modelName === 'hypercar' && (
+        <group>
+          {/* Sleek low main body */}
+          <mesh castShadow position={[0, 0.25, 0]}>
+            <boxGeometry args={[1.85, 0.34, 4.3]} />
+            <meshPhysicalMaterial
+              color={bodyColor}
+              metalness={0.98}
+              roughness={0.08}
+              clearcoat={1.0}
+              clearcoatRoughness={0.03}
+              reflectivity={1.0}
+            />
+          </mesh>
+          {/* Futuristic bubble canopy */}
+          <mesh castShadow position={[0, 0.42, -0.2]}>
+            <sphereGeometry args={[0.82, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} scale={[1, 0.45, 1.8]} />
+            <meshPhysicalMaterial
+              color="#020205"
+              metalness={0.9}
+              roughness={0.0}
+              transmission={0.8}
+              transparent
+              opacity={0.7}
+            />
+          </mesh>
+          {/* Left integrated winglet */}
+          <mesh castShadow position={[-0.92, 0.25, -1.3]} rotation={[0, 0, 0.25]}>
+            <boxGeometry args={[0.12, 0.1, 1.8]} />
+            <meshStandardMaterial color={accentColor} metalness={0.9} roughness={0.2} />
+          </mesh>
+          {/* Right integrated winglet */}
+          <mesh castShadow position={[0.92, 0.25, -1.3]} rotation={[0, 0, -0.25]}>
+            <boxGeometry args={[0.12, 0.1, 1.8]} />
+            <meshStandardMaterial color={accentColor} metalness={0.9} roughness={0.2} />
+          </mesh>
+          {/* Underglow neon bar */}
+          <pointLight position={[0, -0.2, 0]} intensity={isNightMode ? 5.0 : 1.5} color={emissiveColor} distance={5} decay={2} />
+        </group>
+      )}
 
-      {/* Windshield (glass) */}
-      <mesh position={[0, 0.62, 0.85]}>
-        <boxGeometry args={[1.5, 0.35, 0.05]} />
-        <meshPhysicalMaterial
-          color="#88ccff"
-          metalness={0.0}
-          roughness={0.0}
-          transmission={0.9}
-          transparent
-          opacity={0.4}
-        />
-      </mesh>
+      {activeCar.modelName === 'muscle' && (
+        <group>
+          {/* Blocky heavy square muscle chassis */}
+          <mesh castShadow position={[0, 0.35, 0]}>
+            <boxGeometry args={[1.9, 0.58, 4.2]} />
+            <meshPhysicalMaterial
+              color={bodyColor}
+              metalness={0.85}
+              roughness={0.25}
+              clearcoat={0.5}
+            />
+          </mesh>
+          {/* Roof cabin */}
+          <mesh castShadow position={[0, 0.72, -0.4]}>
+            <boxGeometry args={[1.5, 0.32, 2.0]} />
+            <meshStandardMaterial color="#111111" roughness={0.85} />
+          </mesh>
+          {/* Front Blower/Scoop on hood */}
+          <mesh castShadow position={[0, 0.68, 1.25]}>
+            <boxGeometry args={[0.55, 0.26, 0.65]} />
+            <meshStandardMaterial color="#777777" metalness={0.95} roughness={0.1} />
+          </mesh>
+          {/* Triple intake butterflies */}
+          <mesh position={[0, 0.82, 1.25]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.14, 0.14, 0.18, 8]} />
+            <meshBasicMaterial color={accentColor} />
+          </mesh>
+          {/* Racing stripe left */}
+          <mesh position={[-0.32, 0.65, 1.9]}>
+            <boxGeometry args={[0.25, 0.02, 0.5]} />
+            <meshBasicMaterial color="#111111" />
+          </mesh>
+          {/* Racing stripe right */}
+          <mesh position={[0.32, 0.65, 1.9]}>
+            <boxGeometry args={[0.25, 0.02, 0.5]} />
+            <meshBasicMaterial color="#111111" />
+          </mesh>
+        </group>
+      )}
 
-      {/* Rear windshield */}
-      <mesh position={[0, 0.62, -1.25]}>
-        <boxGeometry args={[1.5, 0.32, 0.05]} />
-        <meshPhysicalMaterial
-          color="#88ccff"
-          metalness={0.0}
-          roughness={0.0}
-          transmission={0.9}
-          transparent
-          opacity={0.4}
-        />
-      </mesh>
+      {activeCar.modelName === 'formula' && (
+        <group>
+          {/* Slender open-wheel central frame */}
+          <mesh castShadow position={[0, 0.26, 0]}>
+            <boxGeometry args={[0.72, 0.42, 4.3]} />
+            <meshPhysicalMaterial
+              color={bodyColor}
+              metalness={0.9}
+              roughness={0.12}
+              clearcoat={1.0}
+            />
+          </mesh>
+          {/* Wide sidepods left */}
+          <mesh castShadow position={[-0.68, 0.2, 0.1]}>
+            <boxGeometry args={[0.62, 0.3, 1.7]} />
+            <meshStandardMaterial color={accentColor} roughness={0.25} />
+          </mesh>
+          {/* Wide sidepods right */}
+          <mesh castShadow position={[0.68, 0.2, 0.1]}>
+            <boxGeometry args={[0.62, 0.3, 1.7]} />
+            <meshStandardMaterial color={accentColor} roughness={0.25} />
+          </mesh>
+          {/* Massive front wing */}
+          <mesh castShadow position={[0, 0.14, 2.05]}>
+            <boxGeometry args={[1.98, 0.08, 0.45]} />
+            <meshStandardMaterial color="#111111" roughness={0.8} />
+          </mesh>
+          {/* Heavy rear wing assembly */}
+          <mesh castShadow position={[0, 0.74, -2.15]}>
+            <boxGeometry args={[1.78, 0.08, 0.62]} />
+            <meshStandardMaterial color="#111111" roughness={0.8} />
+          </mesh>
+          <mesh castShadow position={[-0.84, 0.42, -2.15]}>
+            <boxGeometry args={[0.06, 0.65, 0.5]} />
+            <meshStandardMaterial color={bodyColor} />
+          </mesh>
+          <mesh castShadow position={[0.84, 0.42, -2.15]}>
+            <boxGeometry args={[0.06, 0.65, 0.5]} />
+            <meshStandardMaterial color={bodyColor} />
+          </mesh>
+        </group>
+      )}
 
-      {/* Front bumper */}
-      <mesh castShadow position={[0, 0.15, 2.15]}>
-        <boxGeometry args={[1.85, 0.28, 0.18]} />
-        <meshStandardMaterial color={accentColor} metalness={0.6} roughness={0.3} />
-      </mesh>
-
-      {/* Rear spoiler */}
-      <mesh castShadow position={[0, 0.72, -2.1]}>
-        <boxGeometry args={[1.6, 0.08, 0.5]} />
-        <meshStandardMaterial color="#111111" metalness={0.7} roughness={0.2} />
-      </mesh>
-      {/* Spoiler stands */}
-      <mesh castShadow position={[-0.65, 0.52, -2.1]}>
-        <boxGeometry args={[0.06, 0.35, 0.12]} />
-        <meshStandardMaterial color="#222222" metalness={0.8} roughness={0.2} />
-      </mesh>
-      <mesh castShadow position={[0.65, 0.52, -2.1]}>
-        <boxGeometry args={[0.06, 0.35, 0.12]} />
-        <meshStandardMaterial color="#222222" metalness={0.8} roughness={0.2} />
-      </mesh>
-
+      {/* ── Shared Universal Lights ─────────────────────────────────────────── */}
       {/* Headlights */}
       <mesh position={[-0.55, 0.32, 2.12]}>
         <boxGeometry args={[0.4, 0.15, 0.05]} />
@@ -193,10 +323,15 @@ export default function Car() {
   const { updateCar, addScore, game } = useGameStore()
   const isNightMode = game.isNightMode
   const selectedTrackId = game.selectedTrackId
+  const selectedCarId = game.selectedCarId
 
   const activeTrack = useMemo(() => {
     return TRACKS[selectedTrackId] || TRACKS[0]
   }, [selectedTrackId])
+
+  const activeCar = useMemo(() => {
+    return CARS[selectedCarId] || CARS[0]
+  }, [selectedCarId])
 
   // Spawn reset effect when track selection or game phases change
   useEffect(() => {
@@ -213,7 +348,7 @@ export default function Car() {
         checkpointsPassed: [],
       })
     }
-  }, [selectedTrackId, game.phase])
+  }, [selectedTrackId, selectedCarId, game.phase])
 
   useFrame((_, delta) => {
     if (!groupRef.current) return
@@ -228,24 +363,24 @@ export default function Car() {
     const nitroAvailable = car.nitro > 5
 
     const speedDelta = computeSpeedDelta(
-      car.speed, forward, backward, brake, nitro, nitroAvailable, delta
+      car.speed, forward, backward, brake, nitro, nitroAvailable, delta, activeCar.physics
     )
     let newSpeed = clamp(
       car.speed + speedDelta,
       -PHYSICS.MAX_REVERSE_SPEED,
-      PHYSICS.MAX_SPEED
+      activeCar.physics.maxSpeed
     )
 
     // ── Nitro ────────────────────────────────────────────────────────────────
     let newNitro = car.nitro
     if (nitro && nitroAvailable && forward) {
-      newNitro = clamp(car.nitro - PHYSICS.NITRO_DRAIN * delta, 0, 100)
+      newNitro = clamp(car.nitro - activeCar.physics.nitroDrain * delta, 0, 100)
     } else {
       newNitro = clamp(car.nitro + PHYSICS.NITRO_RECHARGE * delta, 0, 100)
     }
 
     // ── Steering ─────────────────────────────────────────────────────────────
-    const steerDelta = computeSteeringDelta(newSpeed, left, right, isDrifting, delta)
+    const steerDelta = computeSteeringDelta(newSpeed, left, right, isDrifting, delta, activeCar.physics)
     groupRef.current.rotation.y += steerDelta
 
     // Animate front wheel steering
@@ -266,7 +401,7 @@ export default function Car() {
         0,
         Math.cos(groupRef.current.rotation.y + Math.PI / 2)
       )
-      const slideStrength = (newSpeed / PHYSICS.MAX_SPEED) * 0.3
+      const slideStrength = (newSpeed / activeCar.physics.maxSpeed) * 0.3
       direction.add(lateral.multiplyScalar(right ? slideStrength : -slideStrength)).normalize()
     }
 
@@ -394,7 +529,7 @@ export default function Car() {
 
   return (
     <group ref={groupRef}>
-      <CarBody isDrifting={car.isDrifting} speed={car.speed} isNightMode={isNightMode} />
+      <CarBody isDrifting={car.isDrifting} speed={car.speed} isNightMode={isNightMode} activeCar={activeCar} />
 
       {/* ── Wheels ──────────────────────────────────────────────────────── */}
       {/* Front left */}
@@ -412,23 +547,23 @@ export default function Car() {
           <Trail
             width={0.3}
             length={6}
-            color={car.isNitroActive ? '#ff6600' : '#888888'}
+            color={car.isNitroActive ? activeCar.accentColor : '#888888'}
             attenuation={(t) => t * t}
           >
             <mesh position={[-0.3, 0.12, -2.15]}>
               <sphereGeometry args={[0.05]} />
-              <meshBasicMaterial color={car.isNitroActive ? '#ff6600' : '#666'} />
+              <meshBasicMaterial color={car.isNitroActive ? activeCar.accentColor : '#666'} />
             </mesh>
           </Trail>
           <Trail
             width={0.3}
             length={6}
-            color={car.isNitroActive ? '#ff6600' : '#888888'}
+            color={car.isNitroActive ? activeCar.accentColor : '#888888'}
             attenuation={(t) => t * t}
           >
             <mesh position={[0.3, 0.12, -2.15]}>
               <sphereGeometry args={[0.05]} />
-              <meshBasicMaterial color={car.isNitroActive ? '#ff6600' : '#666'} />
+              <meshBasicMaterial color={car.isNitroActive ? activeCar.accentColor : '#666'} />
             </mesh>
           </Trail>
         </>
@@ -441,7 +576,7 @@ export default function Car() {
           size={3}
           speed={2}
           opacity={0.9}
-          color="#ffaa00"
+          color={activeCar.accentColor}
           scale={[1.5, 0.3, 1.5]}
           position={[0, 0, -1.5]}
         />
@@ -454,7 +589,7 @@ export default function Car() {
           size={4.5}
           speed={3.5}
           opacity={0.95}
-          color="#ff3300"
+          color={activeCar.emissiveColor}
           scale={[1.2, 0.6, 1.2]}
           position={[0, 0.2, 2.1]}
         />
@@ -462,7 +597,7 @@ export default function Car() {
 
       {/* ── Nitro Glow ──────────────────────────────────────────────────── */}
       {car.isNitroActive && (
-        <pointLight position={[0, 0.2, -2.2]} color="#ff6600" intensity={6} distance={5} decay={2} />
+        <pointLight position={[0, 0.2, -2.2]} color={activeCar.accentColor} intensity={6} distance={5} decay={2} />
       )}
     </group>
   )

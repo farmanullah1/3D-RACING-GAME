@@ -14,7 +14,7 @@ export interface TrackData {
   groundColor: string
   barrierColor: string
   emissiveColor: string
-  decorations: 'trees' | 'rocks' | 'city'
+  decorations: 'trees' | 'rocks' | 'city' | 'space'
   skyColor: string
   scoreMultiplier: number
   description: string
@@ -130,6 +130,39 @@ export const TRACKS: TrackData[] = [
       { id: 1, x: 45, z: -15, name: 'Checkpoint 1', color: '#ff6600' },
       { id: 2, x: -50, z: 55, name: 'Checkpoint 2', color: '#39ff14' },
       { id: 3, x: -15, z: -20, name: 'Checkpoint 3', color: '#bf00ff' },
+    ],
+  },
+  {
+    id: 3,
+    name: 'Nebula Void',
+    difficulty: 'Hard',
+    points: [
+      [0, 0, -40],
+      [30, 0, -50],
+      [60, 0, -30],
+      [40, 0, 0],
+      [60, 0, 30],
+      [30, 0, 50],
+      [0, 0, 35],
+      [-30, 0, 50],
+      [-60, 0, 30],
+      [-40, 0, 0],
+      [-60, 0, -30],
+      [-30, 0, -50],
+    ],
+    groundColor: '#03030d',      // Cosmic void
+    barrierColor: '#bf00ff',     // Holographic violet
+    emissiveColor: '#aa00aa',
+    decorations: 'space',
+    skyColor: '#050015',         // Space dark violet
+    scoreMultiplier: 3.0,
+    description: 'A stellar racetrack suspended in deep space. Flanked by glowing nebula clouds and drifting cosmic asteroids.',
+    features: ['Deep Space Rift', 'Pulsing Starfields', 'Obsidian Anti-Grav Road'],
+    checkpoints: [
+      { id: 0, x: 0, z: -40, name: 'Start/Finish', color: '#bf00ff' },
+      { id: 1, x: 40, z: 0, name: 'Checkpoint 1', color: '#ff6600' },
+      { id: 2, x: 0, z: 35, name: 'Checkpoint 2', color: '#39ff14' },
+      { id: 3, x: -40, z: 0, name: 'Checkpoint 3', color: '#00d4ff' },
     ],
   },
 ]

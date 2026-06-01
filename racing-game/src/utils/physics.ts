@@ -37,18 +37,20 @@ export function computeSpeedDelta(
   isBrake: boolean,
   isNitro: boolean,
   nitroAvailable: boolean,
-  delta: number
+  delta: number,
+  customPhysics?: { acceleration: number }
 ): number {
   const nitroBoost = (isNitro && nitroAvailable) ? PHYSICS.NITRO_MULTIPLIER : 1.0
+  const accelerationConst = customPhysics ? customPhysics.acceleration : PHYSICS.ACCELERATION
   let acceleration = 0
 
   if (isForward) {
-    acceleration = PHYSICS.ACCELERATION * nitroBoost
+    acceleration = accelerationConst * nitroBoost
   } else if (isBackward) {
     if (currentSpeed > 0) {
       acceleration = -PHYSICS.BRAKING  // braking while going forward
     } else {
-      acceleration = -PHYSICS.ACCELERATION * 0.6  // reverse
+      acceleration = -accelerationConst * 0.6  // reverse
     }
   } else if (isBrake) {
     acceleration = currentSpeed > 0 ? -PHYSICS.BRAKING * 1.5 : PHYSICS.BRAKING * 1.5
@@ -71,14 +73,16 @@ export function computeSteeringDelta(
   isLeft: boolean,
   isRight: boolean,
   isDrifting: boolean,
-  delta: number
+  delta: number,
+  customPhysics?: { steeringSpeed: number }
 ): number {
   if (!isLeft && !isRight) return 0
   if (Math.abs(currentSpeed) < 2) return 0  // no steering when stopped
 
   const direction = isLeft ? 1 : -1
   const speedFactor = Math.min(Math.abs(currentSpeed) / 80, 1)  // speed-sensitive steering
-  const steeringRate = isDrifting ? PHYSICS.DRIFT_STEERING : PHYSICS.STEERING_SPEED
+  const steeringRateVal = customPhysics ? customPhysics.steeringSpeed : PHYSICS.STEERING_SPEED
+  const steeringRate = isDrifting ? steeringRateVal * 1.6 : steeringRateVal
   return direction * steeringRate * speedFactor * delta * (currentSpeed < 0 ? -1 : 1)
 }
 
