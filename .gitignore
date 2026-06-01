@@ -1,0 +1,15 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Dependencies and build
+node_modules/
+racing-game/node_modules/
+racing-game/dist/
+dist/
+
+# Editor directories and files
+.vscode/
+.idea/
+.DS_Store
