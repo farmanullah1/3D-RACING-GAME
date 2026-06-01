@@ -113,21 +113,48 @@ export function CityCircuit() {
         )
       })}
 
-      {/* ── Neon signs ────────────────────────────────────────────────── */}
-      <NeonSign position={[-30, 4, -40]} color="#00ffff" label="APEXRUSH" />
-      <NeonSign position={[40, 4, 30]} color="#ff00aa" label="TURBO" />
-      <NeonSign position={[-50, 4, 60]} color="#39ff14" label="DRIFT" />
-      <NeonSign position={[80, 4, -20]} color="#bf00ff" label="NEON" />
+      {/* ── Neon signs positioned mathematically outside the barriers ── */}
+      {Array.from({length: 4}, (_, i) => {
+        const t = 0.12 + (i * 0.25)
+        const p = track.getPointAt(t)
+        const side = i % 2 === 0 ? -1 : 1
+        const no = track.getNormalAt(t, side * 10)
+        const colors = ["#00d4ff", "#ff00aa", "#39ff14", "#bf00ff"]
+        const labels = ["APEXRUSH", "TURBO", "DRIFT", "NEON"]
+        return (
+          <NeonSign 
+            key={i} 
+            position={[p.x + no.x, 4, p.z + no.z]} 
+            color={colors[i]} 
+            label={labels[i]} 
+          />
+        )
+      })}
 
-      {/* ── City buildings (skyline) ──────────────────────────────────── */}
-      <Building pos={[-45, 0, -85]} w={25} h={70} d={25} />
-      <Building pos={[50, 0, -100]} w={35} h={90} d={30} />
-      <Building pos={[-75, 0, 10]} w={30} h={60} d={30} />
-      <Building pos={[75, 0, 60]} w={40} h={100} d={40} />
-      <Building pos={[100, 0, -60]} w={20} h={80} d={20} />
-      <Building pos={[-90, 0, -30]} w={30} h={55} d={30} />
-      <Building pos={[-20, 0, 120]} w={35} h={75} d={35} />
-      <Building pos={[25, 0, -140]} w={40} h={110} d={40} />
+      {/* ── City buildings (skyline canyon) mathematically aligned to track bounds ── */}
+      {Array.from({length: 12}, (_, i) => {
+        const t = (i / 12) + 0.04
+        const p = track.getPointAt(t)
+        const side = i % 2 === 0 ? -1 : 1
+        // Places buildings safely at least 26 units from the road center
+        const offset = side * (26 + (i * 1.5) % 10)
+        const no = track.getNormalAt(t, offset)
+        
+        // Balanced procedural sizes for stunning urban skylines
+        const w = 22 + (i * 7) % 12
+        const h = 50 + (i * 13) % 45
+        const d = 22 + (i * 7) % 12
+        
+        return (
+          <Building 
+            key={i} 
+            pos={[p.x + no.x, 0, p.z + no.z]} 
+            w={w} 
+            h={h} 
+            d={d} 
+          />
+        )
+      })}
 
       {/* ── Rain puddle reflection planes ────────────────────────────── */}
       {Array.from({length:8}, (_,i) => {
