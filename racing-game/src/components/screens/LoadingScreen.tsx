@@ -1,17 +1,28 @@
-import { useProgress } from '@react-three/drei'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useGameStore } from '../../store/gameStore'
 
 export default function LoadingScreen() {
-  const { progress, active } = useProgress()
+  const [progress, setProgress] = useState(0)
   const setPhase = useGameStore((s) => s.setPhase)
 
   useEffect(() => {
-    if (!active && progress === 100) {
-      const t = setTimeout(() => setPhase('menu'), 600)
-      return () => clearTimeout(t)
-    }
-  }, [active, progress, setPhase])
+    const startTime = Date.now()
+    const duration = 1200 // 1.2s smooth loading simulation
+
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime
+      const current = Math.min((elapsed / duration) * 100, 100)
+      setProgress(current)
+
+      if (current >= 100) {
+        clearInterval(interval)
+        const t = setTimeout(() => setPhase('menu'), 400)
+        return () => clearTimeout(t)
+      }
+    }, 16) // ~60fps smooth progression
+
+    return () => clearInterval(interval)
+  }, [setPhase])
 
   return (
     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black animate-fade-in">
@@ -40,7 +51,11 @@ export default function LoadingScreen() {
           />
         </div>
         <p className="font-game text-[9px] text-white/30 mt-2 uppercase tracking-widest">
-          Initializing engine systems...
+          {progress < 40
+            ? 'Initializing engine systems...'
+            : progress < 80
+            ? 'Compiling shaders & procedural assets...'
+            : 'Preloading textures... Ready!'}
         </p>
       </div>
 
