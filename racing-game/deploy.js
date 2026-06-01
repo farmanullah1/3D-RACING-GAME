@@ -16,10 +16,15 @@ try {
 
   // Initialize git in dist
   execSync('git init', options)
-  execSync('git checkout -b gh-pages', options)
+  execSync('git checkout -B gh-pages', options)
   execSync('git add .', options)
   execSync('git commit -m "Deploy to GitHub Pages"', options)
-  execSync('git remote add origin https://github.com/farmanullah1/3D-RACING-GAME.git', options)
+  
+  try {
+    execSync('git remote add origin https://github.com/farmanullah1/3D-RACING-GAME.git', options)
+  } catch (e) {
+    execSync('git remote set-url origin https://github.com/farmanullah1/3D-RACING-GAME.git', options)
+  }
   
   // Force push to gh-pages branch
   console.log('📤 Pushing build to GitHub...')
