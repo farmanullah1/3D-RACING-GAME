@@ -14,7 +14,7 @@ export interface TrackData {
   groundColor: string
   barrierColor: string
   emissiveColor: string
-  decorations: 'trees' | 'rocks' | 'city' | 'space'
+  decorations: 'trees' | 'rocks' | 'city' | 'space' | 'lava' | 'ice'
   skyColor: string
   scoreMultiplier: number
   description: string
@@ -163,6 +163,72 @@ export const TRACKS: TrackData[] = [
       { id: 1, x: 40, z: 0, name: 'Checkpoint 1', color: '#ff6600' },
       { id: 2, x: 0, z: 35, name: 'Checkpoint 2', color: '#39ff14' },
       { id: 3, x: -40, z: 0, name: 'Checkpoint 3', color: '#00d4ff' },
+    ],
+  },
+  {
+    id: 4,
+    name: 'Volcanic Rim',
+    difficulty: 'Hard',
+    points: [
+      [0, 0, -55],
+      [30, 0, -60],
+      [60, 0, -40],
+      [50, 0, -10],
+      [70, 0, 20],
+      [40, 0, 50],
+      [0, 0, 60],
+      [-40, 0, 50],
+      [-70, 0, 20],
+      [-50, 0, -10],
+      [-60, 0, -40],
+      [-30, 0, -60],
+    ],
+    groundColor: '#260b05',      // Molten magma ground
+    barrierColor: '#ff3300',     // Magma red
+    emissiveColor: '#991100',
+    decorations: 'lava',
+    skyColor: '#3d1000',         // Ash red sunset
+    scoreMultiplier: 3.5,
+    description: 'A dangerous course winding around the mouth of an active volcano, wreathed in glowing magma spouts and ash flows.',
+    features: ['Molten Lava Spouts', 'Magma Rim Drift', 'Extreme Heat Wave'],
+    checkpoints: [
+      { id: 0, x: 0, z: -55, name: 'Start/Finish', color: '#ff3300' },
+      { id: 1, x: 50, z: -10, name: 'Checkpoint 1', color: '#ff6600' },
+      { id: 2, x: 0, z: 60, name: 'Checkpoint 2', color: '#39ff14' },
+      { id: 3, x: -50, z: -10, name: 'Checkpoint 3', color: '#00d4ff' },
+    ],
+  },
+  {
+    id: 5,
+    name: 'Glacial Rift',
+    difficulty: 'Medium',
+    points: [
+      [0, 0, -50],
+      [25, 0, -55],
+      [50, 0, -35],
+      [40, 0, 5],
+      [60, 0, 35],
+      [30, 0, 55],
+      [0, 0, 45],
+      [-30, 0, 55],
+      [-60, 0, 35],
+      [-40, 0, 5],
+      [-50, 0, -35],
+      [-25, 0, -55],
+    ],
+    groundColor: '#0a1d30',      // Freezing blue ground
+    barrierColor: '#00d4ff',     // Icy cyan barrier
+    emissiveColor: '#0066aa',
+    decorations: 'ice',
+    skyColor: '#050c18',         // Deep frozen twilight sky
+    scoreMultiplier: 2.2,
+    description: 'A winding arctic path bordered by massive sub-zero glaciers and glowing ancient ice crystals bobbing in the freezing air.',
+    features: ['Aurora Glow skies', 'Translucent Glacial Rift', 'Low-grip Icy Basalt'],
+    checkpoints: [
+      { id: 0, x: 0, z: -50, name: 'Start/Finish', color: '#00d4ff' },
+      { id: 1, x: 40, z: 5, name: 'Checkpoint 1', color: '#39ff14' },
+      { id: 2, x: 0, z: 45, name: 'Checkpoint 2', color: '#ff073a' },
+      { id: 3, x: -40, z: 5, name: 'Checkpoint 3', color: '#bf00ff' },
     ],
   },
 ]

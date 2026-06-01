@@ -123,6 +123,86 @@ function Asteroid({ position }: { position: [number, number, number] }) {
   )
 }
 
+/** Glowing Lava Magma Spout */
+function LavaSpout({ position }: { position: [number, number, number] }) {
+  const height = 4 + Math.random() * 5
+  const radius = 0.5 + Math.random() * 0.5
+  
+  const ref = useRef<THREE.Mesh>(null)
+  useFrame(({ clock }) => {
+    if (ref.current) {
+      const mat = ref.current.material as THREE.MeshStandardMaterial
+      mat.emissiveIntensity = 1.0 + Math.sin(clock.getElapsedTime() * 4 + position[0]) * 0.4
+    }
+  })
+
+  return (
+    <group position={position}>
+      {/* Basalt cooling crust outer column */}
+      <mesh castShadow receiveShadow position={[0, height / 2, 0]}>
+        <cylinderGeometry args={[radius * 0.7, radius, height, 6]} />
+        <meshStandardMaterial color="#1a0a05" roughness={0.9} />
+      </mesh>
+      {/* Molten inner core cylinder */}
+      <mesh ref={ref} position={[0, height / 2, 0]}>
+        <cylinderGeometry args={[radius * 0.72, radius * 0.95, height - 0.2, 6]} />
+        <meshStandardMaterial
+          color="#ff3300"
+          emissive="#ff3300"
+          emissiveIntensity={1.2}
+          roughness={0.2}
+        />
+      </mesh>
+      {/* Spout glow light */}
+      <pointLight position={[0, height, 0]} color="#ff4400" intensity={2.5} distance={10} decay={2} />
+    </group>
+  )
+}
+
+/** Glowing Ice Obelisk */
+function IceObelisk({ position }: { position: [number, number, number] }) {
+  const height = 5 + Math.random() * 6
+  const width = 1 + Math.random() * 1.5
+  
+  const ref = useRef<THREE.Mesh>(null)
+  useFrame(({ clock }) => {
+    if (ref.current) {
+      ref.current.rotation.y = clock.getElapsedTime() * 0.2 + position[0]
+      const mat = ref.current.material as THREE.MeshPhysicalMaterial
+      mat.emissiveIntensity = 0.5 + Math.sin(clock.getElapsedTime() * 2 + position[2]) * 0.2
+    }
+  })
+
+  return (
+    <group position={position}>
+      {/* Translucent Glowing Ice Crystal Column */}
+      <mesh ref={ref} castShadow receiveShadow position={[0, height / 2, 0]}>
+        <octahedronGeometry args={[width, 1]} />
+        <meshPhysicalMaterial
+          color="#00d4ff"
+          emissive="#00b0ff"
+          emissiveIntensity={0.6}
+          roughness={0.05}
+          metalness={0.9}
+          clearcoat={1.0}
+          clearcoatRoughness={0.1}
+          transmission={0.9}
+          transparent
+          opacity={0.8}
+          thickness={1.2}
+        />
+      </mesh>
+      {/* Ice Base Rocks */}
+      <mesh castShadow position={[0, 0.4, 0]}>
+        <dodecahedronGeometry args={[width * 1.2, 0]} />
+        <meshStandardMaterial color="#c0e0ff" roughness={0.8} />
+      </mesh>
+      {/* Cold blue light glow */}
+      <pointLight position={[0, height / 2, 0]} color="#00d4ff" intensity={1.8} distance={8} decay={2} />
+    </group>
+  )
+}
+
 /** Glowing checkpoint gate */
 function CheckpointGate({
   position,
@@ -298,6 +378,10 @@ export default function Track() {
           return <Skyscraper key={i} position={pos} />
         } else if (activeTrack.decorations === 'space') {
           return <Asteroid key={i} position={pos} />
+        } else if (activeTrack.decorations === 'lava') {
+          return <LavaSpout key={i} position={pos} />
+        } else if (activeTrack.decorations === 'ice') {
+          return <IceObelisk key={i} position={pos} />
         } else {
           return <Tree key={i} position={pos} />
         }

@@ -49,6 +49,48 @@ function Wheel({
   )
 }
 
+/** Glowing anti-grav hover pad for futuristic craft */
+function HoverPad({
+  position,
+  activeCar
+}: {
+  position: [number, number, number]
+  activeCar: any
+}) {
+  const padRef = useRef<THREE.Mesh>(null)
+  
+  useFrame(({ clock }) => {
+    if (padRef.current) {
+      // Bobbing and spinning effect
+      padRef.current.rotation.y = clock.getElapsedTime() * 4
+      const mat = padRef.current.material as THREE.MeshStandardMaterial
+      mat.emissiveIntensity = 1.0 + Math.sin(clock.getElapsedTime() * 8 + position[0]) * 0.3
+    }
+  })
+
+  return (
+    <group position={position}>
+      {/* Metallic support pad ring */}
+      <mesh castShadow receiveShadow>
+        <cylinderGeometry args={[0.38, 0.42, 0.12, 16]} />
+        <meshStandardMaterial color="#2a2a2a" roughness={0.4} metalness={0.9} />
+      </mesh>
+      {/* Inner anti-grav glowing core */}
+      <mesh ref={padRef} position={[0, -0.02, 0]}>
+        <cylinderGeometry args={[0.32, 0.32, 0.08, 12]} />
+        <meshStandardMaterial
+          color={activeCar.accentColor}
+          emissive={activeCar.accentColor}
+          emissiveIntensity={1.2}
+          roughness={0.1}
+        />
+      </mesh>
+      {/* Sub-hover glow point light */}
+      <pointLight position={[0, -0.2, 0]} intensity={1.5} color={activeCar.accentColor} distance={3} decay={2} />
+    </group>
+  )
+}
+
 /** Car body + details */
 /** Car body + details */
 function CarBody({
@@ -261,6 +303,127 @@ function CarBody({
             <boxGeometry args={[0.06, 0.65, 0.5]} />
             <meshStandardMaterial color={bodyColor} />
           </mesh>
+        </group>
+      )}
+
+      {activeCar.modelName === 'drift_special' && (
+        <group>
+          {/* Carbon body shell */}
+          <mesh castShadow position={[0, 0.26, 0]}>
+            <boxGeometry args={[1.82, 0.44, 4.3]} />
+            <meshPhysicalMaterial
+              color="#222222"
+              roughness={0.8}
+              metalness={0.9}
+              clearcoat={0.1}
+            />
+          </mesh>
+          {/* Neon green stripes on hood */}
+          <mesh position={[-0.35, 0.49, 1.4]} rotation={[0.08, 0, 0]}>
+            <boxGeometry args={[0.2, 0.02, 1.2]} />
+            <meshBasicMaterial color={bodyColor} />
+          </mesh>
+          <mesh position={[0.35, 0.49, 1.4]} rotation={[0.08, 0, 0]}>
+            <boxGeometry args={[0.2, 0.02, 1.2]} />
+            <meshBasicMaterial color={bodyColor} />
+          </mesh>
+          {/* Carbon cockpit canopy */}
+          <mesh castShadow position={[0, 0.62, -0.2]}>
+            <boxGeometry args={[1.5, 0.36, 2.1]} />
+            <meshPhysicalMaterial
+              color="#111111"
+              metalness={0.9}
+              roughness={0.2}
+              transmission={0.4}
+              transparent
+              opacity={0.9}
+            />
+          </mesh>
+          {/* Double rear wing spoilers (Drift hyper-downforce) */}
+          {/* Spoiler lower deck */}
+          <mesh castShadow position={[0, 0.68, -2.0]}>
+            <boxGeometry args={[1.8, 0.06, 0.55]} />
+            <meshStandardMaterial color="#111111" roughness={0.9} />
+          </mesh>
+          {/* Spoiler upper deck */}
+          <mesh castShadow position={[0, 0.94, -2.15]}>
+            <boxGeometry args={[1.9, 0.06, 0.6]} />
+            <meshStandardMaterial color={bodyColor} roughness={0.2} />
+          </mesh>
+          {/* Stand left */}
+          <mesh castShadow position={[-0.75, 0.6, -2.05]}>
+            <boxGeometry args={[0.05, 0.68, 0.2]} />
+            <meshStandardMaterial color="#222222" />
+          </mesh>
+          {/* Stand right */}
+          <mesh castShadow position={[0.75, 0.6, -2.05]}>
+            <boxGeometry args={[0.05, 0.68, 0.2]} />
+            <meshStandardMaterial color="#222222" />
+          </mesh>
+          {/* Underglow neon drift light */}
+          <pointLight position={[0, -0.2, 0]} intensity={isNightMode ? 6.0 : 2.0} color={emissiveColor} distance={6} decay={2} />
+        </group>
+      )}
+
+      {activeCar.modelName === 'cyber_hover' && (
+        <group>
+          {/* Main hover pod fuselage */}
+          <mesh castShadow position={[0, 0.28, 0]}>
+            <boxGeometry args={[1.72, 0.38, 4.4]} />
+            <meshPhysicalMaterial
+              color="#120c22"
+              roughness={0.15}
+              metalness={0.95}
+              clearcoat={1.0}
+              clearcoatRoughness={0.05}
+            />
+          </mesh>
+          {/* Swept aerodynamic wings/fins */}
+          <mesh castShadow position={[-0.95, 0.32, -0.8]} rotation={[0.08, 0.15, -0.15]}>
+            <boxGeometry args={[0.5, 0.08, 1.8]} />
+            <meshStandardMaterial color={bodyColor} roughness={0.2} metalness={0.8} />
+          </mesh>
+          <mesh castShadow position={[0.95, 0.32, -0.8]} rotation={[0.08, -0.15, 0.15]}>
+            <boxGeometry args={[0.5, 0.08, 1.8]} />
+            <meshStandardMaterial color={bodyColor} roughness={0.2} metalness={0.8} />
+          </mesh>
+          {/* Translucent neon cyan cockpit bubble */}
+          <mesh castShadow position={[0, 0.58, 0.4]}>
+            <sphereGeometry args={[0.8, 16, 16]} />
+            <meshPhysicalMaterial
+              color={accentColor}
+              emissive={accentColor}
+              emissiveIntensity={0.2}
+              metalness={0.1}
+              roughness={0.05}
+              transmission={0.9}
+              transparent
+              opacity={0.7}
+              thickness={1.5}
+            />
+          </mesh>
+          {/* Gravity stabilizer vector thrusters on rear tail */}
+          <mesh castShadow position={[0, 0.54, -2.0]}>
+            <boxGeometry args={[1.5, 0.12, 0.5]} />
+            <meshStandardMaterial color="#111111" roughness={0.9} />
+          </mesh>
+          {/* Left Vertical tail stabilizer */}
+          <mesh castShadow position={[-0.7, 0.74, -2.1]} rotation={[0, 0, -0.08]}>
+            <boxGeometry args={[0.06, 0.58, 0.4]} />
+            <meshStandardMaterial color={bodyColor} />
+          </mesh>
+          {/* Right Vertical tail stabilizer */}
+          <mesh castShadow position={[0.7, 0.74, -2.1]} rotation={[0, 0, 0.08]}>
+            <boxGeometry args={[0.06, 0.58, 0.4]} />
+            <meshStandardMaterial color={bodyColor} />
+          </mesh>
+          {/* Glowing anti-matter exhaust vector ring */}
+          <mesh position={[0, 0.28, -2.25]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[0.42, 0.06, 8, 16]} />
+            <meshBasicMaterial color={accentColor} />
+          </mesh>
+          {/* Ambient anti-gravity underglow projection */}
+          <pointLight position={[0, -0.3, 0]} intensity={isNightMode ? 7.0 : 3.0} color={emissiveColor} distance={8} decay={2} />
         </group>
       )}
 
@@ -531,15 +694,27 @@ export default function Car() {
     <group ref={groupRef}>
       <CarBody isDrifting={car.isDrifting} speed={car.speed} isNightMode={isNightMode} activeCar={activeCar} />
 
-      {/* ── Wheels ──────────────────────────────────────────────────────── */}
-      {/* Front left */}
-      <Wheel position={[-0.92, 0, 1.3]} isSteering steerAngle={steerAngleRef.current} />
-      {/* Front right */}
-      <Wheel position={[0.92, 0, 1.3]} isSteering steerAngle={steerAngleRef.current} />
-      {/* Rear left */}
-      <Wheel position={[-0.92, 0, -1.3]} />
-      {/* Rear right */}
-      <Wheel position={[0.92, 0, -1.3]} />
+      {/* ── Wheels or Hover Pads ────────────────────────────────────────── */}
+      {activeCar.modelName !== 'cyber_hover' ? (
+        <>
+          {/* Front left */}
+          <Wheel position={[-0.92, 0, 1.3]} isSteering steerAngle={steerAngleRef.current} />
+          {/* Front right */}
+          <Wheel position={[0.92, 0, 1.3]} isSteering steerAngle={steerAngleRef.current} />
+          {/* Rear left */}
+          <Wheel position={[-0.92, 0, -1.3]} />
+          {/* Rear right */}
+          <Wheel position={[0.92, 0, -1.3]} />
+        </>
+      ) : (
+        <>
+          {/* Hover thruster pads */}
+          <HoverPad position={[-0.92, -0.15, 1.3]} activeCar={activeCar} />
+          <HoverPad position={[0.92, -0.15, 1.3]} activeCar={activeCar} />
+          <HoverPad position={[-0.92, -0.15, -1.3]} activeCar={activeCar} />
+          <HoverPad position={[0.92, -0.15, -1.3]} activeCar={activeCar} />
+        </>
+      )}
 
       {/* ── Exhaust Trail ───────────────────────────────────────────────── */}
       {car.speed > 60 && (

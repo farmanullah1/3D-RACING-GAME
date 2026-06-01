@@ -35,6 +35,8 @@ export default function Environment() {
     else if (activeTrack.decorations === 'rocks') baseElevation = 4 // Sunset low sun
     else if (activeTrack.decorations === 'city') baseElevation = -25 // City night
     else if (activeTrack.decorations === 'space') baseElevation = -40 // Cosmic deep space
+    else if (activeTrack.decorations === 'lava') baseElevation = 2 // Volcanic red sunset
+    else if (activeTrack.decorations === 'ice') baseElevation = 5 // Freezing winter low sun
     
     sunRef.current.elevation = baseElevation + Math.sin(t) * 2
     sunRef.current.azimuth = 180 + t * 5
@@ -53,6 +55,8 @@ export default function Environment() {
     if (activeTrack.decorations === 'rocks') return [100, 5, -100]
     if (activeTrack.decorations === 'city') return [100, -25, -100]
     if (activeTrack.decorations === 'space') return [100, -40, -100]
+    if (activeTrack.decorations === 'lava') return [100, 2, -100]
+    if (activeTrack.decorations === 'ice') return [100, 5, -100]
     return [100, 20, -100]
   }, [isNightMode, activeTrack])
 
@@ -61,6 +65,8 @@ export default function Environment() {
     if (activeTrack.decorations === 'rocks') return '#ffa07a'
     if (activeTrack.decorations === 'city') return '#1b1035'
     if (activeTrack.decorations === 'space') return '#1f003a' // Deep cosmic purple
+    if (activeTrack.decorations === 'lava') return '#3a0800' // Glowing magma red-orange
+    if (activeTrack.decorations === 'ice') return '#a0d0ff' // Light icy blue
     return '#b0c8ff'
   }, [isNightMode, activeTrack])
 
@@ -68,6 +74,8 @@ export default function Environment() {
     if (isNightMode) return 0.08
     if (activeTrack.decorations === 'city') return 0.25
     if (activeTrack.decorations === 'space') return 0.35
+    if (activeTrack.decorations === 'lava') return 0.45
+    if (activeTrack.decorations === 'ice') return 0.5 // High ambient bounce from snow
     return 0.4
   }, [isNightMode, activeTrack])
 
@@ -76,6 +84,8 @@ export default function Environment() {
     if (activeTrack.decorations === 'rocks') return '#ff5500'
     if (activeTrack.decorations === 'city') return '#bf00ff'
     if (activeTrack.decorations === 'space') return '#ff00aa' // Pink starlight
+    if (activeTrack.decorations === 'lava') return '#ff3c00' // Incandescent orange-red sun
+    if (activeTrack.decorations === 'ice') return '#d0e8ff' // Cold bluish white
     return '#fff5e0'
   }, [isNightMode, activeTrack])
 
@@ -84,6 +94,8 @@ export default function Environment() {
     if (activeTrack.decorations === 'rocks') return 1.8
     if (activeTrack.decorations === 'city') return 0.5
     if (activeTrack.decorations === 'space') return 0.7
+    if (activeTrack.decorations === 'lava') return 1.6
+    if (activeTrack.decorations === 'ice') return 1.8
     return 2.2
   }, [isNightMode, activeTrack])
 
@@ -91,6 +103,8 @@ export default function Environment() {
     if (activeTrack.decorations === 'city') return '#bf00ff'
     if (activeTrack.decorations === 'rocks') return '#ff9900'
     if (activeTrack.decorations === 'space') return '#ff33ff' // Purple stellar dust
+    if (activeTrack.decorations === 'lava') return '#ff5500' // Glowing embers
+    if (activeTrack.decorations === 'ice') return '#d0f0ff' // Snowflake crystals
     return '#ffffff'
   }, [activeTrack])
 
@@ -99,6 +113,8 @@ export default function Environment() {
       if (activeTrack.decorations === 'rocks') return '#503020'
       if (activeTrack.decorations === 'city') return '#02020a'
       if (activeTrack.decorations === 'space') return '#010103'
+      if (activeTrack.decorations === 'lava') return '#100300'
+      if (activeTrack.decorations === 'ice') return '#051222'
       return '#0c1b0a'
     }
     return activeTrack.groundColor

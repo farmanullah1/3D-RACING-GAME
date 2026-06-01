@@ -39,11 +39,13 @@ html, body, #root {
 .neon-text-green { color: #39ff14; text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff1480; }
 .neon-text-red { color: #ff073a; text-shadow: 0 0 10px #ff073a, 0 0 20px #ff073a80; }
 .neon-text-orange { color: #ff6600; text-shadow: 0 0 10px #ff6600, 0 0 20px #ff660080; }
+.neon-text-purple { color: #bf00ff; text-shadow: 0 0 10px #bf00ff, 0 0 20px #bf00ff80; }
 
 .neon-border-blue { border-color: #00d4ff; box-shadow: 0 0 8px #00d4ff60, inset 0 0 8px #00d4ff20; }
 .neon-border-green { border-color: #39ff14; box-shadow: 0 0 8px #39ff1460, inset 0 0 8px #39ff1420; }
 .neon-border-red { border-color: #ff073a; box-shadow: 0 0 8px #ff073a60, inset 0 0 8px #ff073a20; }
 .neon-border-orange { border-color: #ff6600; box-shadow: 0 0 8px #ff660060, inset 0 0 8px #ff660020; }
+.neon-border-purple { border-color: #bf00ff; box-shadow: 0 0 8px #bf00ff60, inset 0 0 8px #bf00ff20; }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar { width: 4px; }

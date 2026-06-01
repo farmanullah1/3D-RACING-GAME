@@ -106,5 +106,47 @@ export const CARS: CarData[] = [
       steeringSpeed: 3.3,
       nitroDrain: 30,
     }
+  },
+  {
+    id: 4,
+    name: 'Venom RX',
+    modelName: 'drift_special',
+    description: 'Special Edition drift monster built for aggressive slip angles. Features lightweight carbon composites and custom twin spoilers for maximum drift multipliers.',
+    color: '#39ff14', // Neon Green
+    accentColor: '#bf00ff', // Violet Purple
+    emissiveColor: '#39ff14',
+    stats: {
+      speed: 80,
+      handling: 98,
+      acceleration: 72,
+      nitro: 65,
+    },
+    physics: {
+      maxSpeed: 215,
+      acceleration: 75,
+      steeringSpeed: 3.8,
+      nitroDrain: 22,
+    }
+  },
+  {
+    id: 5,
+    name: 'Phantom Cyber',
+    modelName: 'cyber_hover',
+    description: 'A classified hover-prototype with zero road friction. Fitted with high-intensity antimatter thrusters and cyan gravity stabilizers for drift speed preservation.',
+    color: '#bf00ff', // Neon Purple
+    accentColor: '#00d4ff', // Neon Cyan
+    emissiveColor: '#bf00ff',
+    stats: {
+      speed: 99,
+      handling: 85,
+      acceleration: 90,
+      nitro: 75,
+    },
+    physics: {
+      maxSpeed: 235,
+      acceleration: 82,
+      steeringSpeed: 2.8,
+      nitroDrain: 20,
+    }
   }
 ]
