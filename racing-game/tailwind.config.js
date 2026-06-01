@@ -114,8 +114,6 @@ export default {
         countFlip:  { '0%': { transform: 'rotateX(-90deg) scale(0.5)', opacity: '0' }, '100%': { transform: 'rotateX(0deg) scale(1)', opacity: '1' } },
         carIntro:   { '0%': { transform: 'translateX(-100px) rotateY(20deg)', opacity: '0' }, '100%': { transform: 'translateX(0) rotateY(0deg)', opacity: '1' } },
       },
-      // ── Backdrop Blur ───────────────────────────────────────────────
-      backdropBlur: { xs: '2px', '4xl': '80px' },
       // ── Border Radius ───────────────────────────────────────────────
       borderRadius: { '4xl': '2rem', '5xl': '3rem' },
     },
