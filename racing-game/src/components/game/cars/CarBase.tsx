@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Trail, Sparkles } from '@react-three/drei'
 import * as THREE from 'three'
@@ -13,6 +13,7 @@ import {
 } from '../../../utils/physics'
 import { getTrack } from '../../../data/tracks'
 import type { CarDefinition } from '../../../types'
+import { playCollision, playCheckpoint } from '../../../utils/audio'
 
 export interface CarBaseProps {
   /** Render the visual car body (called as a child) */
@@ -72,6 +73,25 @@ export default function CarBase({ renderBody, carDef, startPosition, startRotati
   const garageEntry = useGarageStore.getState().getEntry(carDef.id)
   const { recordFrame } = useReplay(selectedTrackId, carDef.id)
   const { updateEngineSound } = useAudio()
+
+  // ── Spline curve & checkpoints precalculations ─────────────────────────────
+  const curve = useMemo(() => {
+    return new THREE.CatmullRomCurve3(
+      track.controlPoints.map(([x,y,z]) => new THREE.Vector3(x, y, z)),
+      true, 'catmullrom', 0.5
+    )
+  }, [track.controlPoints])
+
+  const splineSamples = useMemo(() => {
+    return curve.getPoints(200)
+  }, [curve])
+
+  const checkpoints = useMemo(() => {
+    return [0, 1, 2, 3].map(i => {
+      const p = curve.getPointAt(i * 0.25)
+      return { id: i, position: new THREE.Vector3(p.x, p.y, p.z) }
+    })
+  }, [curve])
 
   // Set initial position
   useEffect(() => {
@@ -159,6 +179,60 @@ export default function CarBase({ renderBody, carDef, startPosition, startRotati
     const moveAmount = (speedRef.current / 3.6) * delta
     groupRef.current.position.addScaledVector(dir, moveAmount)
     groupRef.current.position.y = startPosition[1]  // lock to ground
+
+    // ── Barrier Collision Detection & Response ────────────────────────────────
+    const carPos = groupRef.current.position
+    let minSquareDist = Infinity
+    let closestIndex = 0
+    for (let i = 0; i < splineSamples.length; i++) {
+      const d2 = carPos.distanceToSquared(splineSamples[i])
+      if (d2 < minSquareDist) {
+        minSquareDist = d2
+        closestIndex = i
+      }
+    }
+    const closestPt = splineSamples[closestIndex]
+    const distanceToSpline = Math.sqrt(minSquareDist)
+    const hw = track.trackWidth / 2
+
+    if (distanceToSpline > hw) {
+      // Barrier impact! Push car back onto road boundary
+      const pushDir = new THREE.Vector3().subVectors(closestPt, carPos).normalize()
+      groupRef.current.position.add(pushDir.multiplyScalar(distanceToSpline - hw))
+      
+      // Calculate damage and sound response
+      if (Math.abs(speedRef.current) > 30) {
+        const damagePercent = Math.min(Math.round(Math.abs(speedRef.current) * PHYSICS.DAMAGE_SPEED_MULT), PHYSICS.DAMAGE_PER_IMPACT)
+        damageRef.current = Math.min(100, damageRef.current + damagePercent)
+        
+        // play collision sfx and apply negative score impact
+        playCollision()
+        addScore('near_miss', -10, '💥 BARRIER COLLISION -10')
+      }
+      // Bounce velocity bounce back at 35% speed
+      speedRef.current = -speedRef.current * 0.35
+    }
+
+    // ── Checkpoint Detection ──────────────────────────────────────────────────
+    checkpoints.forEach(cp => {
+      const dist = carPos.distanceTo(cp.position)
+      if (dist < 16) { // 16 units radius check
+        const { checkpointsPassed, completeLap, passCheckpoint } = useGameStore.getState()
+        if (cp.id === 0) {
+          // Pass start line (0) to complete lap if checkpoints 1, 2, 3 have been recorded
+          if (checkpointsPassed.includes(1) && checkpointsPassed.includes(2) && checkpointsPassed.includes(3)) {
+            playCheckpoint()
+            completeLap()
+          }
+        } else {
+          if (!checkpointsPassed.includes(cp.id)) {
+            playCheckpoint()
+            passCheckpoint(cp.id)
+            addScore('clean_lap', 20, `⏱️ SECTION ${cp.id} SECTOR! +20`)
+          }
+        }
+      }
+    })
 
     // Roll/tilt on steering
     const tiltTarget = (right ? -0.05 : left ? 0.05 : 0) * clamp(speedRef.current / 100, 0, 1)
